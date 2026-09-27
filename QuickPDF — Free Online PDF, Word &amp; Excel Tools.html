@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QuickPDF — Free Online PDF Tools</title>
+<meta name="description" content="Merge, split, rotate and convert PDF files free, right in your browser. No uploads, no signup, no watermark.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{
+  --paper:#F6F7F5; --panel:#FFFFFF; --ink:#14181A; --muted:#5C645E; --line:#DEE1DA;
+  --cobalt:#2A4FCC; --cobalt-dark:#1F3AA0; --ember:#D9531E; --mint:#0E8A62;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --paper:#101213; --panel:#181B1C; --ink:#EDEFEC; --muted:#9AA29B; --line:#2A2E2C; }
+}
+:root[data-theme="dark"]{ --paper:#101213; --panel:#181B1C; --ink:#EDEFEC; --muted:#9AA29B; --line:#2A2E2C; }
+html{scroll-padding-top:70px;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Work Sans',system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;}
+h1,h2,h3,.disp{font-family:'Fraunces',Georgia,serif;letter-spacing:-0.01em;}
+a{color:inherit;text-decoration:none;}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px;}
+img{max-width:100%;}
+
+header{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line);z-index:20;padding-top:env(safe-area-inset-top,0px);}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0;}
+.logo{display:flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-weight:600;font-size:1.3rem;}
+.logo svg{flex:0 0 auto;}
+.navlinks{display:flex;gap:28px;font-size:.92rem;color:var(--muted);}
+.navlinks a:hover{color:var(--ink);}
+.navcta{background:var(--cobalt);color:#fff;padding:9px 18px;border-radius:6px;font-size:.9rem;font-weight:600;}
+.navcta:hover{background:var(--cobalt-dark);}
+@media (max-width:680px){ .navlinks{display:none;} }
+
+.hero{padding:76px 0 52px;display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:end;}
+.hero h1{font-size:clamp(2.2rem,4.6vw,3.4rem);font-weight:600;margin:0 0 20px;line-height:1.06;max-width:13ch;}
+.hero p{color:var(--muted);font-size:1.08rem;max-width:44ch;margin:0 0 26px;}
+.hero-stats{display:flex;gap:28px;border-top:1px solid var(--line);padding-top:18px;}
+.stat b{display:block;font-family:'Fraunces',serif;font-size:1.5rem;font-weight:600;}
+.stat span{font-size:.82rem;color:var(--muted);}
+.heroside{border-left:1px solid var(--line);padding-left:36px;}
+.heroside p{font-size:.95rem;color:var(--muted);margin:0 0 14px;}
+@media (max-width:760px){ .hero{grid-template-columns:1fr;} .heroside{border-left:none;padding-left:0;border-top:1px solid var(--line);padding-top:20px;} }
+
+.adslot{border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--muted);font-size:.78rem;margin:32px 0;background:var(--panel);}
+.adslot b{display:block;font-size:.72rem;letter-spacing:.04em;color:var(--muted);margin-bottom:4px;}
+
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 6px;}
+.section-head h2{font-size:1.7rem;font-weight:600;margin:0;}
+.section-head span{color:var(--muted);font-size:.9rem;}
+.tools{border-top:1px solid var(--line);margin-top:18px;}
+.tool-row{display:flex;align-items:center;gap:18px;padding:22px 4px;border-bottom:1px solid var(--line);cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;color:inherit;font:inherit;transition:background .12s;}
+.tool-row:hover{background:rgba(42,79,204,0.05);}
+.ticon{flex:0 0 auto;width:42px;height:42px;border-radius:8px;background:rgba(42,79,204,0.1);display:flex;align-items:center;justify-content:center;}
+.tname{font-family:'Fraunces',serif;font-weight:600;font-size:1.15rem;}
+.tdesc{color:var(--muted);font-size:.9rem;margin-top:2px;}
+.arrow{margin-left:auto;color:var(--muted);transition:transform .15s;}
+.tool-row[aria-expanded="true"] .arrow{transform:rotate(180deg);}
+
+.panel{display:none;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:26px;margin:4px 0 30px;}
+.panel.open{display:block;}
+.panel h3{margin:0 0 4px;font-family:'Fraunces',serif;font-size:1.25rem;}
+.panel .sub{color:var(--muted);font-size:.9rem;margin-bottom:18px;}
+.drop{display:block;border:1.5px dashed var(--line);border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;font-size:.92rem;color:var(--muted);}
+.drop:hover,.drop.drag{border-color:var(--cobalt);background:rgba(42,79,204,0.04);}
+.drop input{display:none;}
+.filelist{margin:14px 0;}
+.fitem{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;font-size:.88rem;background:var(--paper);}
+.fitem button{background:none;border:none;color:var(--ember);cursor:pointer;font-size:.82rem;font-weight:600;}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+input[type=text]{border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:9px 11px;border-radius:6px;font-family:inherit;font-size:.9rem;}
+select{border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:9px 11px;border-radius:6px;font-family:inherit;font-size:.9rem;}
+.btn{background:var(--cobalt);color:#fff;border:none;padding:11px 22px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.9rem;transition:background .15s;}
+.btn:hover{background:var(--cobalt-dark);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn.alt{background:var(--mint);}
+.status{margin-top:14px;font-size:.88rem;color:var(--muted);min-height:1.2em;}
+.status.ok{color:var(--mint);font-weight:600;}
+.status.err{color:var(--ember);font-weight:600;}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:24px 0 8px;}
+.step{border-top:2px solid var(--ink);padding-top:12px;}
+.step b{font-family:'Fraunces',serif;font-size:1.05rem;display:block;margin-bottom:6px;}
+.step p{color:var(--muted);font-size:.9rem;margin:0;}
+@media (max-width:680px){ .steps{grid-template-columns:1fr;} }
+
+.trust{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:20px 0;}
+.trust div{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;}
+.trust b{font-family:'Fraunces',serif;font-size:1.05rem;display:block;margin-bottom:6px;}
+.trust p{color:var(--muted);font-size:.88rem;margin:0;}
+@media (max-width:760px){ .trust{grid-template-columns:1fr;} }
+
+footer{border-top:1px solid var(--line);margin-top:40px;padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));}
+.fgrid{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;color:var(--muted);font-size:.85rem;}
+.fgrid a:hover{color:var(--ink);}
+.fcol b{display:block;color:var(--ink);font-family:'Fraunces',serif;margin-bottom:10px;}
+.fcol a{display:block;margin-bottom:6px;}
+section[id]{scroll-margin-top:80px;}
+::selection{background:var(--cobalt);color:#fff;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="2" width="14" height="20" rx="2" fill="var(--cobalt)"/><path d="M17 6l4 4v12a2 2 0 0 1-2 2H7" stroke="var(--cobalt)" stroke-width="1.6" fill="none"/><text x="6" y="16" font-family="Work Sans" font-weight="700" font-size="7" fill="#fff">PDF</text></svg>Quick<span style="color:var(--cobalt)">PDF</span></div>
+    <div class="navlinks">
+      <a href="#tools">Tools</a>
+      <a href="#how">How it works</a>
+      <a href="#about">About</a>
+      <a href="#privacy">Privacy</a>
+    </div>
+    <a href="#tools" class="navcta">Open a tool</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <div>
+      <h1>Every PDF, Word and Excel tool you actually need, in one tab.</h1>
+      <p>Merge, split, rotate and convert between PDF, Word and Excel for free. Nothing leaves your device — files are processed right in your browser, not on a server.</p>
+      <div class="hero-stats">
+        <div class="stat"><b>9</b><span>free tools</span></div>
+        <div class="stat"><b>0s</b><span>upload wait</span></div>
+        <div class="stat"><b>100%</b><span>private &amp; local</span></div>
+      </div>
+    </div>
+    <div class="heroside">
+      <p>No account. No watermark. No file size games. Pick a tool, drop your file, download the result.</p>
+      <a href="#tools" class="btn" style="display:inline-block">Get started</a>
+    </div>
+  </section>
+
+  <div class="adslot" data-ad-slot="hero-banner"><b>ADVERTISEMENT</b>728×90 ad unit — replace this block with your AdSense / ad-network code</div>
+
+  <section id="tools">
+    <div class="section-head"><h2>Choose a tool</h2><span>All processing happens on your device</span></div>
+    <div class="tools" id="toolsList"></div>
+  </section>
+
+  <div class="adslot" data-ad-slot="mid-content">300×250 ad unit — place a second ad here, above the fold on mobile</div>
+
+  <section id="how">
+    <div class="section-head"><h2>How it works</h2></div>
+    <div class="steps">
+      <div class="step"><b>1. Pick a tool</b><p>Choose merge, split, image-to-PDF or rotate from the list above.</p></div>
+      <div class="step"><b>2. Drop your file</b><p>Drag and drop, or click to browse. Files never leave your browser.</p></div>
+      <div class="step"><b>3. Download the result</b><p>Your finished PDF downloads straight away — no waiting, no queue.</p></div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="section-head"><h2>Why QuickPDF</h2></div>
+    <div class="trust">
+      <div><b>Private by design</b><p>Your files are processed locally using your browser's own engine — they're never uploaded anywhere.</p></div>
+      <div><b>No sign-up wall</b><p>Every tool works immediately. No account, no email, no trial limits.</p></div>
+      <div><b>Built to be fast</b><p>Because nothing uploads or downloads from a server, results are ready in seconds.</p></div>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="section-head"><h2>Privacy &amp; terms</h2></div>
+    <p style="color:var(--muted);max-width:64ch;font-size:.92rem;">QuickPDF does not upload, store, or transmit your files to any server — all conversion happens locally in your browser. This site may display ads served by third-party networks, which may use cookies to personalize ads. By using this site you agree to standard web analytics and advertising cookies. Contact: <a href="mailto:hello@example.com" style="color:var(--cobalt)">hello@example.com</a></p>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap fgrid">
+    <div class="fcol"><b>Quick<span style="color:var(--cobalt)">PDF</span></b><span>Free PDF tools, no upload.</span></div>
+    <div class="fcol"><b>Tools</b><a href="#tools">Merge PDF</a><a href="#tools">Split PDF</a><a href="#tools">JPG to PDF</a><a href="#tools">Rotate PDF</a></div>
+    <div class="fcol"><b>Site</b><a href="#how">How it works</a><a href="#about">About</a><a href="#privacy">Privacy</a></div>
+  </div>
+</footer>
+
+<script>
+const { PDFDocument, degrees } = PDFLib;
+
+const TOOLS = [
+  {id:'merge', name:'Merge PDF', desc:'Combine several PDF files into one, in the order you choose.', accept:'.pdf', multiple:true},
+  {id:'split', name:'Split PDF', desc:'Pull out specific pages, or split every page into its own file.', accept:'.pdf', multiple:false},
+  {id:'img2pdf', name:'JPG to PDF', desc:'Turn one or more images (JPG/PNG) into a single PDF.', accept:'.jpg,.jpeg,.png', multiple:true},
+  {id:'rotate', name:'Rotate PDF', desc:'Rotate every page of a PDF by 90, 180 or 270 degrees.', accept:'.pdf', multiple:false},
+  {id:'word2pdf', name:'Word to PDF', desc:'Convert a .docx file into a PDF.', accept:'.docx', multiple:false},
+  {id:'pdf2word', name:'PDF to Word', desc:'Pull the text out of a PDF into an editable .docx file.', accept:'.pdf', multiple:false},
+  {id:'excel2pdf', name:'Excel to PDF', desc:'Convert a spreadsheet (.xlsx/.csv) into a PDF table.', accept:'.xlsx,.xls,.csv', multiple:false},
+  {id:'pdf2excel', name:'PDF to Excel', desc:'Pull tables and text from a PDF into an .xlsx file.', accept:'.pdf', multiple:false},
+  {id:'ppt', name:'PowerPoint ⇄ PDF', desc:'Coming soon — reliable PowerPoint conversion in-browser is on the way.', accept:'', multiple:false, comingSoon:true},
+];
+
+const ICONS = {
+  merge:'<path d="M7 4h6l4 4v12H7z" fill="none" stroke="var(--cobalt)" stroke-width="1.6"/><path d="M13 4v4h4" fill="none" stroke="var(--cobalt)" stroke-width="1.6"/>',
+  split:'<rect x="5" y="4" width="8" height="16" rx="1" fill="none" stroke="var(--cobalt)" stroke-width="1.6"/><rect x="15" y="4" width="4" height="16" rx="1" fill="none" stroke="var(--cobalt)" stroke-width="1.6"/>',
+  img2pdf:'<rect x="4" y="5" width="10" height="8" rx="1" fill="none" stroke="var(--cobalt)" stroke-width="1.6"/><circle cx="7" cy="8" r="1" fill="var(--cobalt)"/><path d="M4 12l2.5-2.5L10 13" fill="none" stroke="var(--cobalt)" stroke-width="1.4"/><path d="M16 8h4M16 12h4M16 16h4" stroke="var(--cobalt)" stroke-width="1.6"/>',
+  rotate:'<rect x="6" y="6" width="12" height="12" rx="1" fill="none" stroke="var(--cobalt)" stroke-width="1.6" transform="rotate(-10 12 12)"/><path d="M18 5a7 7 0 1 1-6 3" fill="none" stroke="var(--cobalt)" stroke-width="1.4"/><path d="M18 3v3h-3" fill="none" stroke="var(--cobalt)" stroke-width="1.4"/>',
+  word2pdf:'<rect x="4" y="3" width="16" height="18" rx="1.5" fill="none" stroke="var(--cobalt)" stroke-width="1.6"/><text x="6.5" y="15" font-family="Work Sans" font-weight="700" font-size="7" fill="var(--cobalt)">W</text><path d="M8 18h8" stroke="var(--cobalt)" stroke-width="1.4"/>',
+  pdf2word:'<rect x="4" y="3" width="16" height="18" rx="1.5" fill="none" stroke="var(--cobalt)" stroke-width="1.6"/><text x="6" y="15" font-family="Work Sans" font-weight="700" font-size="6.5" fill="var(--cobalt)">PDF</text><path d="M8 18h8" stroke="var(--cobalt)" stroke-width="1.4"/>',
+  excel2pdf:'<rect x="4" y="3" width="16" height="18" rx="1.5" fill="none" stroke="var(--cobalt)" stroke-width="1.6"/><text x="6.5" y="15" font-family="Work Sans" font-weight="700" font-size="7" fill="var(--cobalt)">X</text><path d="M8 18h8" stroke="var(--cobalt)" stroke-width="1.4"/>',
+  pdf2excel:'<rect x="4" y="3" width="16" height="18" rx="1.5" fill="none" stroke="var(--cobalt)" stroke-width="1.6"/><text x="6" y="15" font-family="Work Sans" font-weight="700" font-size="6.5" fill="var(--cobalt)">PDF</text><path d="M8 18h8" stroke="var(--cobalt)" stroke-width="1.4"/>',
+  ppt:'<rect x="4" y="3" width="16" height="18" rx="1.5" fill="none" stroke="var(--muted)" stroke-width="1.6"/><text x="6.5" y="15" font-family="Work Sans" font-weight="700" font-size="7" fill="var(--muted)">P</text><path d="M8 18h8" stroke="var(--muted)" stroke-width="1.4"/>'
+};
+
+const toolsEl = document.getElementById('toolsList');
+TOOLS.forEach(t=>{
+  const row = document.createElement('button');
+  row.className='tool-row';
+  row.setAttribute('aria-expanded','false');
+  row.innerHTML = `<div class="ticon"><svg width="22" height="22" viewBox="0 0 24 24">${ICONS[t.id]}</svg></div><div style="flex:1"><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div></div><div class="arrow">▾</div>`;
+  row.onclick = ()=> togglePanel(t,row);
+  toolsEl.appendChild(row);
+  const panel = document.createElement('div');
+  panel.className='panel';
+  panel.id='panel-'+t.id;
+  toolsEl.appendChild(panel);
+});
+
+let state = {};
+
+function togglePanel(t,row){
+  const panel = document.getElementById('panel-'+t.id);
+  const wasOpen = panel.classList.contains('open');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('open'));
+  document.querySelectorAll('.tool-row').forEach(r=>r.setAttribute('aria-expanded','false'));
+  if (wasOpen) return;
+  panel.classList.add('open');
+  row.setAttribute('aria-expanded','true');
+  if (!panel.dataset.built){ buildPanel(t, panel); panel.dataset.built='1'; }
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function buildPanel(t, panel){
+  if (t.comingSoon){
+    panel.innerHTML = `<h3>${t.name}</h3><div class="sub">${t.desc}</div><p style="color:var(--muted);font-size:.9rem;">PowerPoint files are a much more complex format to rebuild in a browser. Until that's ready, you can open your .pptx in PowerPoint or Google Slides and use its built-in "Export as PDF" option.</p>`;
+    return;
+  }
+  state[t.id] = { files: [] };
+  let extra = '';
+  if (t.id==='split') extra = `<div class="row"><label style="font-size:.88rem;color:var(--muted);">Pages (e.g. 1-3, 5):</label><input type="text" id="range-${t.id}" placeholder="1-3" style="width:120px"></div>`;
+  if (t.id==='rotate') extra = `<div class="row"><label style="font-size:.88rem;color:var(--muted);">Rotate by:</label><select id="deg-${t.id}"><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>`;
+
+  panel.innerHTML = `
+    <h3>${t.name}</h3>
+    <div class="sub">${t.desc}</div>
+    <label class="drop" id="drop-${t.id}">
+      <input type="file" id="file-${t.id}" accept="${t.accept}" ${t.multiple?'multiple':''}>
+      Drop files here, or click to browse
+    </label>
+    <div class="filelist" id="list-${t.id}"></div>
+    ${extra}
+    <div class="row">
+      <button class="btn" id="run-${t.id}" disabled>${t.name.split(' ')[0]}</button>
+      ${t.id==='split' ? `<button class="btn alt" id="runzip-${t.id}" disabled>Split every page (ZIP)</button>` : ''}
+    </div>
+    <div class="status" id="status-${t.id}"></div>
+  `;
+
+  const input = panel.querySelector(`#file-${t.id}`);
+  const dropzone = panel.querySelector(`#drop-${t.id}`);
+  const listEl = panel.querySelector(`#list-${t.id}`);
+  const runBtn = panel.querySelector(`#run-${t.id}`);
+
+  input.addEventListener('change', e=> addFiles(t, [...e.target.files], listEl, runBtn));
+  dropzone.addEventListener('dragover', e=>{e.preventDefault(); dropzone.classList.add('drag');});
+  dropzone.addEventListener('dragleave', ()=> dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e=>{
+    e.preventDefault(); dropzone.classList.remove('drag');
+    addFiles(t, [...e.dataTransfer.files], listEl, runBtn);
+  });
+
+  runBtn.onclick = ()=> runTool(t, panel);
+  if (t.id==='split'){ panel.querySelector(`#runzip-${t.id}`).onclick = ()=> runSplitZip(t, panel); }
+}
+
+function addFiles(t, files, listEl, runBtn){
+  if (!t.multiple) state[t.id].files = [];
+  state[t.id].files.push(...files);
+  renderList(t, listEl, runBtn);
+}
+
+function renderList(t, listEl, runBtn){
+  listEl.innerHTML='';
+  state[t.id].files.forEach((f,i)=>{
+    const div = document.createElement('div');
+    div.className='fitem';
+    div.innerHTML = `<span>${f.name}</span><button data-i="${i}">Remove</button>`;
+    div.querySelector('button').onclick = ()=>{ state[t.id].files.splice(i,1); renderList(t, listEl, runBtn); };
+    listEl.appendChild(div);
+  });
+  const zipBtn = document.getElementById(`runzip-${t.id}`);
+  const ready = state[t.id].files.length>0;
+  runBtn.disabled = !ready;
+  if (zipBtn) zipBtn.disabled = !ready;
+}
+
+function setStatus(id, msg, cls){
+  const el = document.getElementById('status-'+id);
+  el.textContent = msg;
+  el.className = 'status'+(cls?(' '+cls):'');
+}
+
+function download(bytes, filename, mime){
+  const blob = new Blob([bytes], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
+async function runTool(t, panel){
+  setStatus(t.id, 'Working…');
+  try{
+    if (t.id==='merge') await doMerge();
+    else if (t.id==='split') await doSplitRange(panel);
+    else if (t.id==='img2pdf') await doImg2Pdf();
+    else if (t.id==='rotate') await doRotate(panel);
+    else if (t.id==='word2pdf') await doWordToPdf();
+    else if (t.id==='pdf2word') await doPdfToWord();
+    else if (t.id==='excel2pdf') await doExcelToPdf();
+    else if (t.id==='pdf2excel') await doPdfToExcel();
+  }catch(err){ console.error(err); setStatus(t.id, 'Error: '+err.message, 'err'); }
+}
+
+function escapeXml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function buildDocxFromLines(lines){
+  const paras = lines.map(l=>`<w:p><w:r><w:t xml:space="preserve">${escapeXml(l)}</w:t></w:r></w:p>`).join('');
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+  const docRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${paras}<w:sectPr/></w:body></w:document>`;
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', contentTypes);
+  zip.file('_rels/.rels', rootRels);
+  zip.file('word/document.xml', documentXml);
+  zip.file('word/_rels/document.xml.rels', docRels);
+  return await zip.generateAsync({type:'uint8array'});
+}
+
+async function extractPdfLines(arrayBuffer){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  const lines = [];
+  for (let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    const rows = {};
+    content.items.forEach(it=>{
+      const y = Math.round(it.transform[5]);
+      if (!rows[y]) rows[y] = [];
+      rows[y].push({x: it.transform[4], str: it.str});
+    });
+    Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{
+      const line = rows[y].sort((a,b)=>a.x-b.x).map(i=>i.str).join(' ').trim();
+      if (line) lines.push(line);
+    });
+    if (p < pdf.numPages) lines.push('');
+  }
+  return lines;
+}
+
+async function extractPdfTable(arrayBuffer){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  const table = [];
+  for (let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    const rows = {};
+    content.items.forEach(it=>{
+      const y = Math.round(it.transform[5]);
+      if (!rows[y]) rows[y] = [];
+      rows[y].push({x: it.transform[4], str: it.str});
+    });
+    Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{
+      const items = rows[y].sort((a,b)=>a.x-b.x);
+      const cols = [];
+      let cur = '', lastEnd = null;
+      items.forEach(it=>{
+        if (lastEnd !== null && it.x - lastEnd > 8){ cols.push(cur.trim()); cur = it.str; }
+        else cur += (cur ? ' ' : '') + it.str;
+        lastEnd = it.x + it.str.length*4;
+      });
+      if (cur) cols.push(cur.trim());
+      if (cols.length) table.push(cols);
+    });
+  }
+  return table;
+}
+
+async function doWordToPdf(){
+  const f = state.word2pdf.files[0];
+  const arrayBuffer = await f.arrayBuffer();
+  const result = await mammoth.extractRawText({arrayBuffer});
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const lines = doc.splitTextToSize(result.value || ' ', 180);
+  let y = 20;
+  lines.forEach(line=>{
+    if (y > 280){ doc.addPage(); y = 20; }
+    doc.text(line, 15, y);
+    y += 7;
+  });
+  doc.save('converted.pdf');
+  setStatus('word2pdf', 'Done — converted.pdf downloaded.', 'ok');
+}
+
+async function doPdfToWord(){
+  const f = state.pdf2word.files[0];
+  const arrayBuffer = await f.arrayBuffer();
+  const lines = await extractPdfLines(arrayBuffer);
+  const bytes = await buildDocxFromLines(lines.length ? lines : ['']);
+  download(bytes, 'converted.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  setStatus('pdf2word', 'Done — converted.docx downloaded. (Text only, layout not preserved.)', 'ok');
+}
+
+async function doExcelToPdf(){
+  const f = state.excel2pdf.files[0];
+  const data = await f.arrayBuffer();
+  const wb = XLSX.read(data, {type:'array'});
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, {header:1});
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(9);
+  let y = 18;
+  rows.forEach(row=>{
+    const line = row.map(c => (c===undefined||c===null) ? '' : String(c)).join('   |   ');
+    const wrapped = doc.splitTextToSize(line || ' ', 180);
+    wrapped.forEach(w=>{
+      if (y > 280){ doc.addPage(); y = 18; }
+      doc.text(w, 15, y);
+      y += 6;
+    });
+  });
+  doc.save('spreadsheet.pdf');
+  setStatus('excel2pdf', 'Done — spreadsheet.pdf downloaded.', 'ok');
+}
+
+async function doPdfToExcel(){
+  const f = state.pdf2excel.files[0];
+  const arrayBuffer = await f.arrayBuffer();
+  const table = await extractPdfTable(arrayBuffer);
+  const ws = XLSX.utils.aoa_to_sheet(table.length ? table : [['']]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  const bytes = XLSX.write(wb, {type:'array', bookType:'xlsx'});
+  download(bytes, 'converted.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  setStatus('pdf2excel', 'Done — converted.xlsx downloaded. (Columns are approximate.)', 'ok');
+}
+
+async function doMerge(){
+  const out = await PDFDocument.create();
+  for (const f of state.merge.files){
+    const bytes = await f.arrayBuffer();
+    const src = await PDFDocument.load(bytes);
+    const pages = await out.copyPages(src, src.getPageIndices());
+    pages.forEach(p=>out.addPage(p));
+  }
+  const bytes = await out.save();
+  download(bytes, 'merged.pdf', 'application/pdf');
+  setStatus('merge', 'Done — merged.pdf downloaded.', 'ok');
+}
+
+function parseRanges(str, max){
+  const out = new Set();
+  str.split(',').forEach(part=>{
+    part = part.trim(); if (!part) return;
+    if (part.includes('-')){
+      let [a,b] = part.split('-').map(n=>parseInt(n.trim(),10));
+      if (isNaN(a)) a=1; if (isNaN(b)) b=max;
+      for (let i=a;i<=b;i++) if (i>=1&&i<=max) out.add(i-1);
+    } else { const n = parseInt(part,10); if (!isNaN(n)&&n>=1&&n<=max) out.add(n-1); }
+  });
+  return [...out].sort((a,b)=>a-b);
+}
+
+async function doSplitRange(panel){
+  const f = state.split.files[0];
+  const bytes = await f.arrayBuffer();
+  const src = await PDFDocument.load(bytes);
+  const max = src.getPageCount();
+  const rangeInput = panel.querySelector(`#range-split`).value.trim();
+  const indices = rangeInput ? parseRanges(rangeInput, max) : src.getPageIndices();
+  if (!indices.length) throw new Error('Enter a valid page number or range');
+  const out = await PDFDocument.create();
+  const pages = await out.copyPages(src, indices);
+  pages.forEach(p=>out.addPage(p));
+  const outBytes = await out.save();
+  download(outBytes, 'split.pdf', 'application/pdf');
+  setStatus('split', 'Done — split.pdf downloaded.', 'ok');
+}
+
+async function runSplitZip(t, panel){
+  setStatus('split', 'Splitting pages…');
+  try{
+    const f = state.split.files[0];
+    const bytes = await f.arrayBuffer();
+    const src = await PDFDocument.load(bytes);
+    const max = src.getPageCount();
+    const zip = new JSZip();
+    for (let i=0;i<max;i++){
+      const out = await PDFDocument.create();
+      const [p] = await out.copyPages(src, [i]);
+      out.addPage(p);
+      zip.file(`page-${i+1}.pdf`, await out.save());
+    }
+    const zipBytes = await zip.generateAsync({type:'uint8array'});
+    download(zipBytes, 'pages.zip', 'application/zip');
+    setStatus('split', `Done — ${max} pages downloaded in pages.zip.`, 'ok');
+  }catch(err){ console.error(err); setStatus('split', 'Error: '+err.message, 'err'); }
+}
+
+async function doImg2Pdf(){
+  const out = await PDFDocument.create();
+  for (const f of state.img2pdf.files){
+    const bytes = await f.arrayBuffer();
+    let img;
+    if (/png$/i.test(f.type) || /\.png$/i.test(f.name)) img = await out.embedPng(bytes);
+    else img = await out.embedJpg(bytes);
+    const page = out.addPage([img.width, img.height]);
+    page.drawImage(img, {x:0, y:0, width:img.width, height:img.height});
+  }
+  const bytes = await out.save();
+  download(bytes, 'images.pdf', 'application/pdf');
+  setStatus('img2pdf', 'Done — images.pdf downloaded.', 'ok');
+}
+
+async function doRotate(panel){
+  const f = state.rotate.files[0];
+  const bytes = await f.arrayBuffer();
+  const src = await PDFDocument.load(bytes);
+  const deg = parseInt(panel.querySelector('#deg-rotate').value, 10);
+  src.getPages().forEach(p=>{
+    const current = p.getRotation().angle || 0;
+    p.setRotation(degrees((current+deg)%360));
+  });
+  const outBytes = await src.save();
+  download(outBytes, 'rotated.pdf', 'application/pdf');
+  setStatus('rotate', 'Done — rotated.pdf downloaded.', 'ok');
+}
+</script>
+</body>
+</html>
